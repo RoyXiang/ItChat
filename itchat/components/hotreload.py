@@ -26,7 +26,9 @@ def dump_login_status(self, fileDir=None):
         'version'   : VERSION,
         'loginInfo' : self.loginInfo,
         'cookies'   : self.s.cookies.get_dict(),
-        'storage'   : self.storageClass.dumps()}
+        'storage'   : self.storageClass.dumps(),
+        'lastMsgId' : self.lastMsgId
+    }
     with open(fileDir, 'wb') as f:
         pickle.dump(status, f)
     logger.debug('Dump login status for hot reload successfully.')
@@ -52,6 +54,7 @@ def load_login_status(self, fileDir,
     self.loginInfo = j['loginInfo']
     self.s.cookies = requests.utils.cookiejar_from_dict(j['cookies'])
     self.storageClass.loads(j['storage'])
+    self.lastMsgId = j['lastMsgId']
     msgList, contactList = self.get_msg()
     if (msgList or contactList) is None:
         self.logout()

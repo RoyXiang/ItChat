@@ -46,6 +46,10 @@ def produce_msg(core, msgList):
     rl = []
     srl = [40, 43, 50, 52, 53, 9999]
     for m in msgList:
+        if core.lastMsgId == m['NewMsgId']:
+            continue
+        else:
+            core.lastMsgId = m['NewMsgId']
         if '@@' in m['FromUserName'] or '@@' in m['ToUserName']:
             produce_group_chat(core, m)
         else:
