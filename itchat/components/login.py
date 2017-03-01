@@ -192,9 +192,7 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
         while self.alive:
             try:
                 i = sync_check(self)
-                if i is None:
-                    self.alive = False
-                elif i == '0':
+                if i == '0':
                     continue
                 else:
                     msgList, contactList = self.get_msg()
@@ -246,8 +244,7 @@ def sync_check(self):
     regx = r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}'
     pm = re.search(regx, r.text)
     if pm is None or pm.group(1) != '0':
-        logger.debug('Unexpected sync check result: %s' % r.text)
-        return None
+        raise Exception('Unexpected sync check result: %s' % r.text)
     return pm.group(2)
 
 def get_msg(self):
