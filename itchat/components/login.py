@@ -192,6 +192,7 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
         while self.alive:
             try:
                 i = sync_check(self)
+                retryCount = 0
                 if i == '0':
                     continue
                 else:
@@ -209,7 +210,6 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                         chatroomMsg = update_local_chatrooms(self, chatroomList)
                         self.msgList.put(chatroomMsg)
                         update_local_friends(self, otherList)
-                retryCount = 0
             except:
                 retryCount += 1
                 logger.error(traceback.format_exc())
