@@ -202,6 +202,9 @@ def produce_group_chat(core, msg):
         content = msg['Content']
         chatroomUserName = msg['ToUserName']
     else:
+        msg['ActualUserName'] = core.storageClass.userName
+        msg['ActualNickName'] = core.storageClass.nickName
+        msg['isAt'] = False
         return
     chatroom = core.storageClass.search_chatrooms(userName=chatroomUserName)
     member = utils.search_dict_list((chatroom or {}).get(

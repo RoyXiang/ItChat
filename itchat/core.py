@@ -55,7 +55,7 @@ class Core(object):
             it is defined in components/login.py
             and of course every single move in login can be called outside
                 - you may scan source code to see how
-                - and modified according to your own demond
+                - and modified according to your own demand
         '''
         raise NotImplementedError()
     def get_QRuuid(self):
