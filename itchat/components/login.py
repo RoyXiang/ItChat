@@ -223,9 +223,10 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
         while self.alive:
             try:
                 i = sync_check(self)
-                retryCount = 0
-                if i == '0':
-                    continue
+                if i is None:
+                    self.alive = False
+                elif i == '0':
+                    pass
                 else:
                     msgList, contactList = self.get_msg()
                     if msgList:
@@ -242,6 +243,7 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                         chatroomMsg = update_local_chatrooms(self, chatroomList)
                         self.msgList.put(chatroomMsg)
                         update_local_friends(self, otherList)
+                retryCount = 0
             except:
                 retryCount += 1
                 logger.error(traceback.format_exc())
@@ -273,10 +275,12 @@ def sync_check(self):
         '_'        : int(time.time() * 1000),}
     headers = { 'User-Agent' : config.USER_AGENT }
     r = self.s.get(url, params=params, headers=headers)
+    r.raise_for_status()
     regx = r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}'
     pm = re.search(regx, r.text)
     if pm is None or pm.group(1) != '0':
-        raise Exception('Unexpected sync check result: %s' % r.text)
+        logger.debug('Unexpected sync check result: %s' % r.text)
+        return None
     return pm.group(2)
 
 def get_msg(self):
