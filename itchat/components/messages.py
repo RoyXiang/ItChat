@@ -58,17 +58,17 @@ def produce_msg(core, msgList):
         else:
             actualOpposite = m['FromUserName']
         # produce basic message
-        if '@@' in m['FromUserName'] or '@@' in m['ToUserName']:
+        if m['FromUserName'].startswith('@@') or m['ToUserName'].startswith('@@'):
             produce_group_chat(core, m)
         else:
             utils.msg_formatter(m, 'Content')
         # set user of msg
-        if '@@' in actualOpposite:
+        if actualOpposite.startswith('@@'):
             m['User'] = core.search_chatrooms(userName=actualOpposite) or \
                 templates.Chatroom({'UserName': actualOpposite})
             # we don't need to update chatroom here because we have
             # updated once when producing basic message
-        elif actualOpposite in ('filehelper', 'fmessage'):
+        elif not actualOpposite.startswith('@'):
             m['User'] = templates.User({'UserName': actualOpposite})
         else:
             m['User'] = core.search_mps(userName=actualOpposite) or \

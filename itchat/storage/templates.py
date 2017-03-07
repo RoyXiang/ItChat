@@ -305,7 +305,7 @@ class ChatroomMember(AbstractUserDict):
 
 def wrap_user_dict(d):
     userName = d.get('UserName')
-    if '@@' in userName:
+    if userName.startswith('@@'):
         r = Chatroom(d)
     elif d.get('VerifyFlag', 8) & 8 == 0:
         r = User(d)
