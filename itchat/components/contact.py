@@ -211,7 +211,8 @@ def update_local_uin(core, msg):
         usernames = msg['StatusNotifyUserName'].split(',')
         if 0 < len(uins) == len(usernames):
             for uin, username in zip(uins, usernames):
-                if not '@' in username: continue
+                if not username.startswith('@'):
+                    continue
                 fullContact = core.memberList + core.chatroomList + core.mpList
                 userDicts = utils.search_dict_list(fullContact,
                     'UserName', username)
@@ -225,7 +226,7 @@ def update_local_uin(core, msg):
                             logger.debug('Uin changed: %s, %s' % (
                                 userDicts['Uin'], uin))
                 else:
-                    if '@@' in username:
+                    if username.startswith('@@'):
                         core.storageClass.updateLock.release()
                         update_chatroom(core, username)
                         core.storageClass.updateLock.acquire()
@@ -239,7 +240,7 @@ def update_local_uin(core, msg):
                             core.chatroomList.append(newChatroomDict)
                         else:
                             newChatroomDict['Uin'] = uin
-                    elif '@' in username:
+                    elif username.startswith('@'):
                         core.storageClass.updateLock.release()
                         update_friend(core, username)
                         core.storageClass.updateLock.acquire()
@@ -290,9 +291,9 @@ def get_contact(self, update=False):
     for m in memberList:
         if m['Sex'] != 0:
             otherList.append(m)
-        elif '@@' in m['UserName']:
+        elif m['UserName'].startswith('@@'):
             chatroomList.append(m)
-        elif '@' in m['UserName']:
+        elif m['UserName'].startswith('@'):
             # mp will be dealt in update_local_friends as well
             otherList.append(m)
     if chatroomList:
