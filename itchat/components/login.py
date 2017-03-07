@@ -204,10 +204,10 @@ def web_init(self):
     for m in contactList:		
         if m['Sex'] != 0:		
             otherList.append(m)		
-        elif '@@' in m['UserName']:		
+        elif m['UserName'].startswith('@@'):
             m['MemberList'] = [] # don't let dirty info pollute the list
             chatroomList.append(m)		
-        elif '@' in m['UserName']:		
+        elif m['UserName'].startswith('@'):
             # mp will be dealt in update_local_friends as well		
             otherList.append(m)		
     if chatroomList:
@@ -251,7 +251,7 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                     if contactList:
                         chatroomList, otherList = [], []
                         for contact in contactList:
-                            if '@@' in contact['UserName']:
+                            if contact['UserName'].startswith('@@'):
                                 chatroomList.append(contact)
                             else:
                                 otherList.append(contact)

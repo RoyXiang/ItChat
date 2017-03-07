@@ -69,7 +69,7 @@ def load_login_status(self, fileDir,
     else:
         if contactList:
             for contact in contactList:
-                if '@@' in contact['UserName']:
+                if contact['UserName'].startswith('@@'):
                     update_local_chatrooms(self, [contact])
                 else:
                     update_local_friends(self, [contact])
