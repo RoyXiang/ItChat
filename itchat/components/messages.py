@@ -50,7 +50,7 @@ def produce_msg(core, msgList):
             continue
         else:
             core.lastMsgId = m['NewMsgId']
-        if '@@' in m['FromUserName'] or '@@' in m['ToUserName']:
+        if m['FromUserName'].startswith('@@') or m['ToUserName'].startswith('@@'):
             produce_group_chat(core, m)
         else:
             utils.msg_formatter(m, 'Content')

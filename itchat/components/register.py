@@ -50,12 +50,11 @@ def configured_reply(self):
             actualOpposite = msg['ToUserName']
         else:
             actualOpposite = msg['FromUserName']
-        if '@@' in actualOpposite:
+        if actualOpposite.startswith('@@'):
             replyFn = self.functionDict['GroupChat'].get(msg['Type'])
         elif self.search_mps(userName=msg['FromUserName']):
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
-        elif '@' in actualOpposite or \
-                actualOpposite in ('filehelper', 'fmessage'):
+        elif actualOpposite.startswith('@') or actualOpposite.isalpha():
             replyFn = self.functionDict['FriendChat'].get(msg['Type'])
         else:
             replyFn = self.functionDict['MpChat'].get(msg['Type'])
