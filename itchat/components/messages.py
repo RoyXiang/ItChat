@@ -225,6 +225,7 @@ def produce_group_chat(core, msg):
         msg['isAt'] = (
             (atFlag + (u'\u2005' if u'\u2005' in msg['Content'] else ' '))
             in msg['Content'] or msg['Content'].endswith(atFlag))
+        msg['atFlag'] = atFlag
 
 def send_raw_msg(self, msgType, content, toUserName):
     url = '%s/webwxsendmsg' % self.loginInfo['url']
