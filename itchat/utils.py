@@ -106,7 +106,8 @@ def search_dict_list(l, key, value):
     ''' Search a list of dict
         * return dict with specific value & key '''
     for i in l:
-        if i.get(key) == value: return i
+        if i.get(key) == value:
+            return i
 
 def print_line(msg, oneLine = False):
     if oneLine:
@@ -141,3 +142,13 @@ def get_image_postfix(data):
     elif b'JFIF' in data:
         return 'jpg'
     return ''
+
+def update_info_dict(oldInfoDict, newInfoDict):
+    ''' only normal values will be updated here
+        because newInfoDict is normal dict, so it's not necessary to consider templates
+    '''
+    for k, v in newInfoDict.items():
+        if any((isinstance(v, t) for t in (tuple, list, dict))):
+            pass # these values will be updated somewhere else
+        elif oldInfoDict.get(k) is None or v not in (None, '', '0', 0):
+            oldInfoDict[k] = v

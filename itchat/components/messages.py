@@ -8,6 +8,7 @@ import requests
 
 from .. import config, utils
 from ..returnvalues import ReturnValue
+from ..storage import templates
 from .contact import update_local_uin
 
 logger = logging.getLogger('itchat')
@@ -54,10 +55,30 @@ def produce_msg(core, msgList):
             continue
         else:
             core.lastMsgId = m['NewMsgId']
+        # get actual opposite
+        if m['FromUserName'] == core.storageClass.userName:
+            actualOpposite = m['ToUserName']
+        else:
+            actualOpposite = m['FromUserName']
+        # produce basic message
         if m['FromUserName'].startswith('@@') or m['ToUserName'].startswith('@@'):
             produce_group_chat(core, m)
         else:
             utils.msg_formatter(m, 'Content')
+        # set user of msg
+        if actualOpposite.startswith('@@'):
+            m['User'] = core.search_chatrooms(userName=actualOpposite) or \
+                templates.Chatroom({'UserName': actualOpposite})
+            # we don't need to update chatroom here because we have
+            # updated once when producing basic message
+        elif actualOpposite in ('filehelper', 'fmessage'):
+            m['User'] = templates.User({'UserName': actualOpposite})
+        else:
+            m['User'] = core.search_mps(userName=actualOpposite) or \
+                core.search_friends(userName=actualOpposite) or \
+                templates.User(userName=actualOpposite)
+            # by default we think there may be a user missing not a mp
+        m['User'].core = core
         if m['MsgType'] == 1: # words
             if m['Url']:
                 regx = r'(.+?\(.+?\))'
@@ -86,6 +107,7 @@ def produce_msg(core, msgList):
                 'FileName' : '%s.mp3' % time.strftime('%y%m%d-%H%M%S', time.localtime()),
                 'Text': download_fn,}
         elif m['MsgType'] == 37: # friends
+            m['User']['UserName'] = m['RecommendInfo']['UserName']
             msg = {
                 'Type': 'Friends',
                 'Text': {
@@ -93,6 +115,7 @@ def produce_msg(core, msgList):
                     'userName'      : m['RecommendInfo']['UserName'],
                     'verifyContent' : m['Ticket'],
                     'autoUpdate'    : m['RecommendInfo'], }, }
+            m['User'].verifyDict = msg['Text']
         elif m['MsgType'] == 42: # name card
             msg = {
                 'Type': 'Card',
@@ -212,7 +235,7 @@ def produce_group_chat(core, msg):
     else:
         msg['ActualUserName'] = core.storageClass.userName
         msg['ActualNickName'] = core.storageClass.nickName
-        msg['isAt'] = False
+        msg['IsAt'] = False
         utils.msg_formatter(msg, 'Content')
         return
     chatroom = core.storageClass.search_chatrooms(userName=chatroomUserName)
@@ -225,15 +248,14 @@ def produce_group_chat(core, msg):
     if member is None:
         logger.debug('chatroom member fetch failed with %s' % actualUserName)
         msg['ActualNickName'] = ''
-        msg['isAt'] = False
+        msg['IsAt'] = False
     else:
-        msg['ActualNickName'] = member['DisplayName'] or member['NickName']
-        atFlag = '@' + (chatroom['self']['DisplayName']
-            or core.storageClass.nickName)
-        msg['isAt'] = (
+        msg['ActualNickName'] = member.get('DisplayName', '') or member['NickName']
+        atFlag = '@' + (chatroom['Self'].get('DisplayName', '') or core.storageClass.nickName)
+        msg['IsAt'] = (
             (atFlag + (u'\u2005' if u'\u2005' in msg['Content'] else ' '))
             in msg['Content'] or msg['Content'].endswith(atFlag))
-        msg['atFlag'] = atFlag
+        msg['AtFlag'] = atFlag
     msg['ActualUserName'] = actualUserName
     msg['Content']        = content
     utils.msg_formatter(msg, 'Content')
@@ -261,19 +283,38 @@ def send_msg(self, msg='Test Message', toUserName=None):
     r = self.send_raw_msg(1, msg, toUserName)
     return r
 
+def _prepare_file(fileDir, file_=None):
+    fileDict = {}
+    if file_:
+        if hasattr(file_, 'read'):
+            file_ = file_.read()
+        else:
+            return ReturnValue({'BaseResponse': {
+                'ErrMsg': 'file_ param should be opened file',
+                'Ret': -1005, }})
+    else:
+        if not utils.check_file(fileDir):
+            return ReturnValue({'BaseResponse': {
+                'ErrMsg': 'No file found in specific dir',
+                'Ret': -1002, }})
+        with open(fileDir, 'rb') as f:
+            file_ = f.read()
+    fileDict['fileSize'] = len(file_)
+    fileDict['fileMd5'] = hashlib.md5(file_).hexdigest()
+    fileDict['file_'] = io.BytesIO(file_)
+    return fileDict
+
 def upload_file(self, fileDir, isPicture=False, isVideo=False,
-        toUserName='filehelper'):
+        toUserName='filehelper', file_=None, preparedFile=None):
     logger.debug('Request to upload a %s: %s' % (
         'picture' if isPicture else 'video' if isVideo else 'file', fileDir))
-    if not utils.check_file(fileDir):
-        return ReturnValue({'BaseResponse': {
-            'ErrMsg': 'No file found in specific dir',
-            'Ret': -1002, }})
-    fileSize = os.path.getsize(fileDir)
+    if not preparedFile:
+        preparedFile = _prepare_file(fileDir, file_)
+        if not preparedFile:
+            return preparedFile
+    fileSize, fileMd5, file_ = \
+        preparedFile['fileSize'], preparedFile['fileMd5'], preparedFile['file_']
     fileSymbol = 'pic' if isPicture else 'video' if isVideo else'doc'
-    with open(fileDir, 'rb') as f:
-        fileMd5 = hashlib.md5(f.read()).hexdigest()
-    file_ = open(fileDir, 'rb')
     chunks = int((fileSize - 1) / 524288) + 1
     clientMediaId = int(time.time() * 1e4)
     uploadMediaRequest = json.dumps(OrderedDict([
@@ -298,7 +339,7 @@ def upload_file(self, fileDir, isPicture=False, isVideo=False,
     return ReturnValue(rawResponse=r)
 
 def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
-        file, chunk, chunks, uploadMediaRequest):
+        file_, chunk, chunks, uploadMediaRequest):
     url = core.loginInfo.get('fileUrl', core.loginInfo['url']) + \
         '/webwxuploadmedia?f=json'
     # save it on server
@@ -316,7 +357,7 @@ def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
         ('uploadmediarequest', (None, uploadMediaRequest)),
         ('webwx_data_ticket', (None, cookiesList['webwx_data_ticket'])),
         ('pass_ticket', (None, core.loginInfo['pass_ticket'])),
-        ('filename' , (os.path.basename(fileDir), file.read(524288), 'application/octet-stream'))])
+        ('filename' , (os.path.basename(fileDir), file_.read(524288), 'application/octet-stream'))])
     if chunks == 1:
         del files['chunk']; del files['chunks']
     else:
@@ -324,13 +365,22 @@ def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
     headers = { 'User-Agent' : config.USER_AGENT }
     return requests.post(url, files=files, headers=headers)
 
-def send_file(self, fileDir, toUserName=None, mediaId=None, filename=None):
+def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename=None):
     fn = filename or os.path.basename(fileDir)
     logger.debug('Request to send a file(mediaId: %s) to %s: %s' % (
         mediaId, toUserName, fn))
-    if toUserName is None: toUserName = self.storageClass.userName
+    if hasattr(fileDir, 'read'):
+        return ReturnValue({'BaseResponse': {
+            'ErrMsg': 'fileDir param should not be an opened file in send_file',
+            'Ret': -1005, }})
+    if toUserName is None:
+        toUserName = self.storageClass.userName
+    preparedFile = _prepare_file(fileDir, file_)
+    if not preparedFile:
+        return preparedFile
+    fileSize = preparedFile['fileSize']
     if mediaId is None:
-        r = self.upload_file(fileDir)
+        r = self.upload_file(fileDir, preparedFile=preparedFile)
         if r:
             mediaId = r['MediaId']
         else:
@@ -342,7 +392,7 @@ def send_file(self, fileDir, toUserName=None, mediaId=None, filename=None):
             'Type': 6,
             'Content': ("<appmsg appid='wxeb7ec651dd0aefa9' sdkver=''><title>%s</title>" % fn +
                 "<des></des><action></action><type>6</type><content></content><url></url><lowurl></lowurl>" +
-                "<appattach><totallen>%s</totallen><attachid>%s</attachid>"%(str(os.path.getsize(fileDir)), mediaId) +
+                "<appattach><totallen>%s</totallen><attachid>%s</attachid>" % (str(fileSize), mediaId) +
                 "<fileext>%s</fileext></appattach><extinfo></extinfo></appmsg>" % fn[1].replace('.', '')),
             'FromUserName': self.storageClass.userName,
             'ToUserName': toUserName,
@@ -356,12 +406,22 @@ def send_file(self, fileDir, toUserName=None, mediaId=None, filename=None):
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
 
-def send_image(self, fileDir, toUserName=None, mediaId=None):
+def send_image(self, fileDir=None, toUserName=None, mediaId=None, file_=None):
     logger.debug('Request to send a image(mediaId: %s) to %s: %s' % (
         mediaId, toUserName, fileDir))
-    if toUserName is None: toUserName = self.storageClass.userName
+    if fileDir or file_:
+        if hasattr(fileDir, 'read'):
+            file_, fileDir = fileDir, None
+        if fileDir is None:
+            fileDir = 'tmp.jpg' # specific fileDir to send gifs
+    else:
+        return ReturnValue({'BaseResponse': {
+            'ErrMsg': 'Either fileDir or file_ should be specific',
+            'Ret': -1005, }})
+    if toUserName is None:
+        toUserName = self.storageClass.userName
     if mediaId is None:
-        r = self.upload_file(fileDir, isPicture=not fileDir[-4:] == '.gif')
+        r = self.upload_file(fileDir, isPicture=not fileDir[-4:] == '.gif', file_=file_)
         if r:
             mediaId = r['MediaId']
         else:
@@ -388,12 +448,22 @@ def send_image(self, fileDir, toUserName=None, mediaId=None):
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
 
-def send_video(self, fileDir=None, toUserName=None, mediaId=None):
+def send_video(self, fileDir=None, toUserName=None, mediaId=None, file_=None):
     logger.debug('Request to send a video(mediaId: %s) to %s: %s' % (
         mediaId, toUserName, fileDir))
-    if toUserName is None: toUserName = self.storageClass.userName
+    if fileDir or file_:
+        if hasattr(fileDir, 'read'):
+            file_, fileDir = fileDir, None
+        if fileDir is None:
+            fileDir = 'tmp.mp4' # specific fileDir to send other formats
+    else:
+        return ReturnValue({'BaseResponse': {
+            'ErrMsg': 'Either fileDir or file_ should be specific',
+            'Ret': -1005, }})
+    if toUserName is None:
+        toUserName = self.storageClass.userName
     if mediaId is None:
-        r = self.upload_file(fileDir, isVideo=True)
+        r = self.upload_file(fileDir, isVideo=True, file_=file_)
         if r:
             mediaId = r['MediaId']
         else:
