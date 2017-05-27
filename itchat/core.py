@@ -29,7 +29,6 @@ class Core(object):
         self.functionDict = {'FriendChat': {}, 'GroupChat': {}, 'MpChat': {}}
         self.useHotReload, self.hotReloadDir = False, 'itchat.pkl'
         self.receivingRetryCount = 5
-        self.lastMsgId = None
     def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
             loginCallback=None, exitCallback=None):
         ''' log in like web wechat does

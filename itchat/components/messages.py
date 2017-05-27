@@ -51,10 +51,6 @@ def produce_msg(core, msgList):
     rl = []
     srl = [40, 43, 50, 52, 53, 9999]
     for m in msgList:
-        if core.lastMsgId == m['NewMsgId']:
-            continue
-        else:
-            core.lastMsgId = m['NewMsgId']
         # get actual opposite
         if m['FromUserName'] == core.storageClass.userName:
             actualOpposite = m['ToUserName']
@@ -71,7 +67,7 @@ def produce_msg(core, msgList):
                 templates.Chatroom({'UserName': actualOpposite})
             # we don't need to update chatroom here because we have
             # updated once when producing basic message
-        elif actualOpposite in ('filehelper', 'fmessage'):
+        elif not actualOpposite.startswith('@'):
             m['User'] = templates.User({'UserName': actualOpposite})
         else:
             m['User'] = core.search_mps(userName=actualOpposite) or \

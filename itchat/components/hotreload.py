@@ -27,8 +27,7 @@ def dump_login_status(self, fileDir=None):
         'version'   : VERSION,
         'loginInfo' : self.loginInfo,
         'cookies'   : self.s.cookies.get_dict(),
-        'storage'   : self.storageClass.dumps(),
-        'lastMsgId' : self.lastMsgId
+        'storage'   : self.storageClass.dumps()
     }
     with open(fileDir, 'wb') as f:
         pickle.dump(status, f)
@@ -57,7 +56,6 @@ def load_login_status(self, fileDir,
     self.loginInfo['User'].core = self
     self.s.cookies = requests.utils.cookiejar_from_dict(j['cookies'])
     self.storageClass.loads(j['storage'])
-    self.lastMsgId = j['lastMsgId']
     try:
         msgList, contactList = self.get_msg()
     except:
