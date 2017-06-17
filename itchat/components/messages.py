@@ -389,7 +389,7 @@ def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename
             'Content': ("<appmsg appid='wxeb7ec651dd0aefa9' sdkver=''><title>%s</title>" % fn +
                 "<des></des><action></action><type>6</type><content></content><url></url><lowurl></lowurl>" +
                 "<appattach><totallen>%s</totallen><attachid>%s</attachid>" % (str(fileSize), mediaId) +
-                "<fileext>%s</fileext></appattach><extinfo></extinfo></appmsg>" % fn[1].replace('.', '')),
+                "<fileext>%s</fileext></appattach><extinfo></extinfo></appmsg>" % os.path.splitext(fn)[1].replace('.', '')),
             'FromUserName': self.storageClass.userName,
             'ToUserName': toUserName,
             'LocalID': int(time.time() * 1e4),
