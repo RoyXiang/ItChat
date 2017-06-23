@@ -172,13 +172,15 @@ def produce_msg(core, msgList):
                 msg = {
                     'Type': 'Attachment',
                     'Text': download_atta, }
-            elif m['AppMsgType'] == 8:
+            elif m['AppMsgType'] in (2, 8):
                 download_fn = get_download_fn(core,
                     '%s/webwxgetmsgimg' % core.loginInfo['url'], m['NewMsgId'])
                 msg = {
                     'Type'     : 'Picture',
-                    'FileName' : '%s.gif' % (
-                        time.strftime('%y%m%d-%H%M%S', time.localtime())),
+                    'FileName' : '%s.%s' % (
+                        time.strftime('%y%m%d-%H%M%S', time.localtime()),
+                        'jpg' if m['AppMsgType'] == 2 else 'gif'
+                    ),
                     'Text'     : download_fn, }
             elif m['AppMsgType'] == 17:
                 msg = {
