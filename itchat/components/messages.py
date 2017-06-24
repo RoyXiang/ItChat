@@ -4,8 +4,6 @@ import mimetypes, hashlib
 import traceback, logging
 from collections import OrderedDict
 
-import requests
-
 from .. import config, utils
 from ..returnvalues import ReturnValue
 from ..storage import templates
@@ -362,7 +360,7 @@ def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
     else:
         files['chunk'], files['chunks'] = (None, str(chunk)), (None, str(chunks))
     headers = { 'User-Agent' : config.USER_AGENT }
-    return requests.post(url, files=files, headers=headers)
+    return core.s.post(url, files=files, headers=headers)
 
 def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename=None):
     fn = filename or os.path.basename(fileDir)

@@ -2,8 +2,6 @@ import os, time, re, io
 import json, copy
 import traceback, logging
 
-import requests
-
 from .. import config, utils
 from ..returnvalues import ReturnValue
 from ..storage import contact_change, templates
