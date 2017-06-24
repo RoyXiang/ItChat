@@ -4,7 +4,6 @@ import json, xml.dom.minidom
 import copy, pickle, random
 import traceback, logging
 
-import requests
 from pyqrcode import QRCode
 
 from .. import config, utils
@@ -260,8 +259,6 @@ def start_receiving(self, exitCallback=None, getReceivingFnOnly=False):
                         self.msgList.put(chatroomMsg)
                         update_local_friends(self, otherList)
                 retryCount = 0
-            except requests.exceptions.ReadTimeout:
-                pass
             except:
                 retryCount += 1
                 logger.error(traceback.format_exc())
@@ -292,7 +289,7 @@ def sync_check(self):
         'synckey'  : self.loginInfo['synckey'],
         '_'        : int(time.time() * 1000),}
     headers = { 'User-Agent' : config.USER_AGENT }
-    r = self.s.get(url, params=params, headers=headers, timeout=config.TIMEOUT)
+    r = self.s.get(url, params=params, headers=headers)
     regx = r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}'
     pm = re.search(regx, r.text)
     if pm is None or pm.group(1) != '0':
@@ -311,7 +308,7 @@ def get_msg(self):
     headers = {
         'ContentType': 'application/json; charset=UTF-8',
         'User-Agent' : config.USER_AGENT }
-    r = self.s.post(url, data=json.dumps(data), headers=headers, timeout=config.TIMEOUT)
+    r = self.s.post(url, data=json.dumps(data), headers=headers)
     dic = json.loads(r.content.decode('utf-8', 'replace'))
     if dic['BaseResponse']['Ret'] != 0: return None, None
     self.loginInfo['SyncKey'] = dic['SyncCheckKey']
