@@ -1,5 +1,3 @@
-import requests
-
 from . import storage
 from .components import load_components
 
@@ -22,7 +20,6 @@ class Core(object):
         self.chatroomList = self.storageClass.chatroomList
         self.msgList = self.storageClass.msgList
         self.loginInfo = {}
-        self.s = requests.Session()
         self.uuid = None
         self.functionDict = {'FriendChat': {}, 'GroupChat': {}, 'MpChat': {}}
         self.useHotReload, self.hotReloadDir = False, 'itchat.pkl'

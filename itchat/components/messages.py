@@ -4,8 +4,6 @@ import mimetypes, hashlib
 import logging
 from collections import OrderedDict
 
-import requests
-
 from .. import config, utils
 from ..returnvalues import ReturnValue
 from ..storage import templates
