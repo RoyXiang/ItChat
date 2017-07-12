@@ -252,6 +252,7 @@ def produce_group_chat(core, msg):
         msg['IsAt'] = (
             (atFlag + (u'\u2005' if u'\u2005' in msg['Content'] else ' '))
             in msg['Content'] or msg['Content'].endswith(atFlag))
+        msg['AtFlag'] = atFlag
     msg['ActualUserName'] = actualUserName
     msg['Content']        = content
     utils.msg_formatter(msg, 'Content')
