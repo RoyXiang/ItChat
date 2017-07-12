@@ -325,13 +325,14 @@ class Core(object):
             it is defined in components/messages.py
         '''
         raise NotImplementedError()
-    def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None):
+    def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename=None):
         ''' send attachment
             for options
                 - fileDir: dir for file ready for upload
                 - mediaId: mediaId for file. 
                     - if set, file will not be uploaded twice
                 - toUserName: 'UserName' key of friend dict
+                - filename: the filename which shows on WeChat dialog
             it is defined in components/messages.py
         '''
         raise NotImplementedError()
