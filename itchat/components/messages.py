@@ -361,9 +361,10 @@ def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
     headers = { 'User-Agent' : config.USER_AGENT }
     return requests.post(url, files=files, headers=headers)
 
-def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None):
+def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename=None):
+    fn = filename or os.path.basename(fileDir)
     logger.debug('Request to send a file(mediaId: %s) to %s: %s' % (
-        mediaId, toUserName, fileDir))
+        mediaId, toUserName, fn))
     if hasattr(fileDir, 'read'):
         return ReturnValue({'BaseResponse': {
             'ErrMsg': 'fileDir param should not be an opened file in send_file',
@@ -385,10 +386,10 @@ def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None):
         'BaseRequest': self.loginInfo['BaseRequest'],
         'Msg': {
             'Type': 6,
-            'Content': ("<appmsg appid='wxeb7ec651dd0aefa9' sdkver=''><title>%s</title>" % os.path.basename(fileDir) +
+            'Content': ("<appmsg appid='wxeb7ec651dd0aefa9' sdkver=''><title>%s</title>" % fn +
                 "<des></des><action></action><type>6</type><content></content><url></url><lowurl></lowurl>" +
                 "<appattach><totallen>%s</totallen><attachid>%s</attachid>" % (str(fileSize), mediaId) +
-                "<fileext>%s</fileext></appattach><extinfo></extinfo></appmsg>" % os.path.splitext(fileDir)[1].replace('.','')),
+                "<fileext>%s</fileext></appattach><extinfo></extinfo></appmsg>" % os.path.splitext(fn)[1].replace('.', '')),
             'FromUserName': self.storageClass.userName,
             'ToUserName': toUserName,
             'LocalID': int(time.time() * 1e4),
