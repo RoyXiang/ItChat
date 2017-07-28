@@ -28,6 +28,11 @@ def retry_on_exception(exception):
     return False
 
 class Session(requests.Session):
+    def __init__(self):
+        super().__init__()
+
+        self.headers.update({ 'User-Agent': config.USER_AGENT })
+
     @retry(wait_fixed=1000, retry_on_exception=retry_on_exception)
     def request(self, method, url, **kwargs):
         kwargs['timeout'] = kwargs.get('timeout', config.TIMEOUT)

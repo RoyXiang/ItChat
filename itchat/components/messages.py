@@ -26,8 +26,7 @@ def get_download_fn(core, url, msgId):
         params = {
             'msgid': msgId,
             'skey': core.loginInfo['skey'],}
-        headers = { 'User-Agent' : config.USER_AGENT }
-        r = core.s.get(url, params=params, stream=True, headers = headers)
+        r = core.s.get(url, params=params, stream=True)
         tempStorage = io.BytesIO()
         for block in r.iter_content(1024):
             tempStorage.write(block)
@@ -122,7 +121,7 @@ def produce_msg(core, msgList):
                 params = {
                     'msgid': msgId,
                     'skey': core.loginInfo['skey'],}
-                headers = {'Range': 'bytes=0-', 'User-Agent' : config.USER_AGENT }
+                headers = { 'Range': 'bytes=0-' }
                 r = core.s.get(url, params=params, headers=headers, stream=True)
                 tempStorage = io.BytesIO()
                 for block in r.iter_content(1024):
@@ -151,8 +150,7 @@ def produce_msg(core, msgList):
                         'fromuser': core.loginInfo['wxuin'],
                         'pass_ticket': 'undefined',
                         'webwx_data_ticket': cookiesList['webwx_data_ticket'],}
-                    headers = { 'User-Agent' : config.USER_AGENT }
-                    r = core.s.get(url, params=params, stream=True, headers=headers)
+                    r = core.s.get(url, params=params, stream=True)
                     tempStorage = io.BytesIO()
                     for block in r.iter_content(1024):
                         tempStorage.write(block)
@@ -270,7 +268,7 @@ def send_raw_msg(self, msgType, content, toUserName):
             'ClientMsgId': int(time.time() * 1e4),
             }, 
         'Scene': 0, }
-    headers = { 'ContentType': 'application/json; charset=UTF-8', 'User-Agent' : config.USER_AGENT }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, headers=headers,
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
@@ -359,8 +357,7 @@ def upload_chunk_file(core, fileDir, fileSymbol, fileSize,
         del files['chunk']; del files['chunks']
     else:
         files['chunk'], files['chunks'] = (None, str(chunk)), (None, str(chunks))
-    headers = { 'User-Agent' : config.USER_AGENT }
-    return core.s.post(url, files=files, headers=headers)
+    return core.s.post(url, files=files)
 
 def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename=None):
     fn = filename or os.path.basename(fileDir)
@@ -396,9 +393,7 @@ def send_file(self, fileDir, toUserName=None, mediaId=None, file_=None, filename
             'LocalID': int(time.time() * 1e4),
             'ClientMsgId': int(time.time() * 1e4), },
         'Scene': 0, }
-    headers = {
-        'User-Agent': config.USER_AGENT,
-        'Content-Type': 'application/json;charset=UTF-8', }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, headers=headers,
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
@@ -438,9 +433,7 @@ def send_image(self, fileDir=None, toUserName=None, mediaId=None, file_=None):
         url = '%s/webwxsendemoticon?fun=sys' % self.loginInfo['url']
         data['Msg']['Type'] = 47
         data['Msg']['EmojiFlag'] = 2
-    headers = {
-        'User-Agent': config.USER_AGENT,
-        'Content-Type': 'application/json;charset=UTF-8', }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, headers=headers,
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
@@ -477,9 +470,7 @@ def send_video(self, fileDir=None, toUserName=None, mediaId=None, file_=None):
             'LocalID'      : int(time.time() * 1e4),
             'ClientMsgId'  : int(time.time() * 1e4), },
         'Scene': 0, }
-    headers = {
-        'User-Agent' : config.USER_AGENT,
-        'Content-Type': 'application/json;charset=UTF-8', }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, headers=headers,
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
@@ -517,9 +508,7 @@ def revoke(self, msgId, toUserName, localId=None):
         "ClientMsgId": localId or str(time.time() * 1e3),
         "SvrMsgId": msgId,
         "ToUserName": toUserName}
-    headers = { 
-        'ContentType': 'application/json; charset=UTF-8', 
-        'User-Agent' : config.USER_AGENT }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, headers=headers,
         data=json.dumps(data, ensure_ascii=False).encode('utf8'))
     return ReturnValue(rawResponse=r)
