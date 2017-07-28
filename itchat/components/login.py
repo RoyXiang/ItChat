@@ -81,8 +81,7 @@ def push_login(core):
     if 'wxuin' in cookiesDict:
         url = '%s/cgi-bin/mmwebwx-bin/webwxpushloginurl?uin=%s' % (
             config.BASE_URL, cookiesDict['wxuin'])
-        headers = { 'User-Agent' : config.USER_AGENT }
-        r = core.s.get(url, headers=headers).json()
+        r = core.s.get(url).json()
         if 'uuid' in r and r.get('ret') in (0, '0'):
             core.uuid = r['uuid']
             return r['uuid']
@@ -93,8 +92,7 @@ def get_QRuuid(self):
     params = {
         'appid' : 'wx782c26e4c19acffb',
         'fun'   : 'new', }
-    headers = { 'User-Agent' : config.USER_AGENT }
-    r = self.s.get(url, params=params, headers=headers)
+    r = self.s.get(url, params=params)
     regx = r'window.QRLogin.code = (\d+); window.QRLogin.uuid = "(\S+?)";'
     data = re.search(regx, r.text)
     if data and data.group(1) == '200':
@@ -124,8 +122,7 @@ def check_login(self, uuid=None):
     localTime = int(time.time())
     params = 'loginicon=true&uuid=%s&tip=0&r=%s&_=%s' % (
         uuid, localTime / 1579, localTime)
-    headers = { 'User-Agent' : config.USER_AGENT }
-    r = self.s.get(url, params=params, headers=headers)
+    r = self.s.get(url, params=params)
     regx = r'window.code=(\d+)'
     data = re.search(regx, r.text)
     if data and data.group(1) == '200':
@@ -146,8 +143,7 @@ def process_login_info(core, loginContent):
     '''
     regx = r'window.redirect_uri="(\S+)";'
     core.loginInfo['url'] = re.search(regx, loginContent).group(1)
-    headers = { 'User-Agent' : config.USER_AGENT }
-    r = core.s.get(core.loginInfo['url'], headers=headers, allow_redirects=False)
+    r = core.s.get(core.loginInfo['url'], allow_redirects=False)
     core.loginInfo['url'] = core.loginInfo['url'][:core.loginInfo['url'].rfind('/')]
     for indexUrl, detailedUrl in (
             ("wx2.qq.com"      , ("file.wx2.qq.com", "webpush.wx2.qq.com")),
@@ -182,9 +178,7 @@ def process_login_info(core, loginContent):
 def web_init(self):
     url = '%s/webwxinit?r=%s' % (self.loginInfo['url'], int(time.time()))
     data = { 'BaseRequest': self.loginInfo['BaseRequest'], }
-    headers = {
-        'ContentType': 'application/json; charset=UTF-8',
-        'User-Agent' : config.USER_AGENT, }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, data=json.dumps(data), headers=headers)
     dic = json.loads(r.content.decode('utf-8', 'replace'))
     # deal with login info
@@ -224,9 +218,7 @@ def show_mobile_login(self):
         'FromUserName' : self.storageClass.userName,
         'ToUserName'   : self.storageClass.userName,
         'ClientMsgId'  : int(time.time()), }
-    headers = {
-        'ContentType': 'application/json; charset=UTF-8',
-        'User-Agent' : config.USER_AGENT, }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, data=json.dumps(data), headers=headers)
     return ReturnValue(rawResponse=r)
 
@@ -288,8 +280,7 @@ def sync_check(self):
         'deviceid' : self.loginInfo['deviceid'],
         'synckey'  : self.loginInfo['synckey'],
         '_'        : int(time.time() * 1000),}
-    headers = { 'User-Agent' : config.USER_AGENT }
-    r = self.s.get(url, params=params, headers=headers)
+    r = self.s.get(url, params=params)
     regx = r'window.synccheck={retcode:"(\d+)",selector:"(\d+)"}'
     pm = re.search(regx, r.text)
     if pm is None or pm.group(1) != '0':
@@ -305,9 +296,7 @@ def get_msg(self):
         'BaseRequest' : self.loginInfo['BaseRequest'],
         'SyncKey'     : self.loginInfo['SyncKey'],
         'rr'          : ~int(time.time()), }
-    headers = {
-        'ContentType': 'application/json; charset=UTF-8',
-        'User-Agent' : config.USER_AGENT }
+    headers = { 'Content-Type': 'application/json;charset=UTF-8' }
     r = self.s.post(url, data=json.dumps(data), headers=headers)
     dic = json.loads(r.content.decode('utf-8', 'replace'))
     if dic['BaseResponse']['Ret'] != 0: return None, None
@@ -323,8 +312,7 @@ def logout(self):
             'redirect' : 1,
             'type'     : 1,
             'skey'     : self.loginInfo['skey'], }
-        headers = { 'User-Agent' : config.USER_AGENT }
-        self.s.get(url, params=params, headers=headers)
+        self.s.get(url, params=params)
         self.alive = False
     self.isLogging = False
     self.s.cookies.clear()
