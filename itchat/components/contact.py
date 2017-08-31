@@ -396,7 +396,8 @@ def get_head_img(self, userName=None, chatroomUserName=None, picDir=None):
     r = self.s.get(url, params=params, stream=True)
     tempStorage = io.BytesIO()
     for block in r.iter_content(1024):
-        tempStorage.write(block)
+        if block:
+            tempStorage.write(block)
     if picDir is None:
         return tempStorage.getvalue()
     with open(picDir, 'wb') as f:

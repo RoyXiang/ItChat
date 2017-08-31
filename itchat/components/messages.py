@@ -29,7 +29,8 @@ def get_download_fn(core, url, msgId):
         r = core.s.get(url, params=params, stream=True)
         tempStorage = io.BytesIO()
         for block in r.iter_content(1024):
-            tempStorage.write(block)
+            if block:
+                tempStorage.write(block)
         if downloadDir is None:
             return tempStorage.getvalue()
         with open(downloadDir, 'wb') as f:
@@ -125,7 +126,8 @@ def produce_msg(core, msgList):
                 r = core.s.get(url, params=params, headers=headers, stream=True)
                 tempStorage = io.BytesIO()
                 for block in r.iter_content(1024):
-                    tempStorage.write(block)
+                    if block:
+                        tempStorage.write(block)
                 if videoDir is None:
                     return tempStorage.getvalue()
                 with open(videoDir, 'wb') as f:
@@ -153,7 +155,8 @@ def produce_msg(core, msgList):
                     r = core.s.get(url, params=params, stream=True)
                     tempStorage = io.BytesIO()
                     for block in r.iter_content(1024):
-                        tempStorage.write(block)
+                        if block:
+                            tempStorage.write(block)
                     if attaDir is None:
                         return tempStorage.getvalue()
                     with open(attaDir, 'wb') as f:
