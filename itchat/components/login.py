@@ -44,10 +44,15 @@ def login(self, enableCmdQR=False, picDir=None, qrCallback=None,
                 picDir=picDir, qrCallback=qrCallback)
             logger.info('Please scan the QR code to log in.')
         isLoggedIn = False
+        lastStatus = lastUUID = None
         while not isLoggedIn:
             status = self.check_login()
-            if hasattr(qrCallback, '__call__'):
+            if hasattr(qrCallback, '__call__') and (status != lastStatus or self.uuid != lastUUID):
                 qrCallback(uuid=self.uuid, status=status, qrcode=qrStorage.getvalue())
+
+            lastStatus = status
+            lastUUID = self.uuid
+
             if status == '200':
                 isLoggedIn = True
             elif status == '201':
